@@ -53,11 +53,12 @@ usage() {
   echo " -o </path/to/wg0.conf        The generated conf will be saved here"
   echo " -k </path/to/pubkey.pem>     (Optional) Verify the server list using this public key. Requires OpenSSL."
   echo " -d <dns server/s>            (Optional) Use these DNS servers in the generated WG config. Defaults to PIA's DNS."
+  echo " -m <fwmark>                  (Optional) FwMark value in Wireguard interface config"
   echo " -a                           List available locations and whether they support port forwarding"
 }
 
 parse_args() {
-  while getopts ":t:l:o:k:d:a" args; do
+  while getopts ":t:l:o:k:d:m:a" args; do
     case ${args} in
       t)
         tokenfile="$OPTARG"
@@ -73,6 +74,9 @@ parse_args() {
         ;;
       d)
         dns="$OPTARG"
+        ;;
+      m)
+        fwmark="$OPTARG"
         ;;
       a)
         list_and_exit=1
@@ -156,6 +160,13 @@ get_wgconf () {
       echo "Using custom DNS servers: $dns"
   fi
 
+  if [ -z "$fwmark" ]; then
+      echo "FwMark variable is not set"
+  else
+      echo "Using FwMark = $fwmark in config"
+      fwmark="FwMark = $fwmark"$'\n'
+  fi
+
   cat <<CONFF > "$wg_out"
 #cn: $wg_cn
 #pf api ip: $pfapi_ip
@@ -163,7 +174,7 @@ get_wgconf () {
 PrivateKey = $client_private_key
 Address = $peer_ip
 DNS = $dns
-
+$fwmark
 [Peer]
 PublicKey = $server_public_key
 AllowedIPs = 0.0.0.0/0
