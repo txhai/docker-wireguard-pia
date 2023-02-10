@@ -37,10 +37,11 @@ usage() {
 }
 
 get_auth_token () {
-    if ! TOK=$(curl --silent --show-error --request POST --max-time "$curl_max_time" \
-        --header "Content-Type: application/json" \
-        --data "{\"username\":\"$user\",\"password\":\"$pass\"}" \
-        "https://www.privateinternetaccess.com/api/client/v2/token" | jq -r '.token'); then
+    TOK=$(curl --silent --location --show-error --request POST --max-time "$curl_max_time" \
+        'https://www.privateinternetaccess.com/api/client/v2/token' \
+        --form "username=$user" \
+        --form "password=$pass" | jq -r '.token')
+    if [ -z "$TOK" ]; then
       echo "Failed to acquire new auth token" && exit 1
     fi
     echo "$TOK"
